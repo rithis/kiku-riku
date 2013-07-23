@@ -1,3 +1,4 @@
+callbacks = require "when/callbacks"
 sequence = require "when/sequence"
 nodefn = require "when/node/function"
 path = require "path"
@@ -31,41 +32,51 @@ module.exports = class Core
       app.listen 3000
 
   loadDi = (diConfigFile) ->
-    @container.inject require diConfigFile
+    callbacks.call(fs.exists, diConfigFile)
+    .then (exists) =>
+      @container.inject require diConfigFile if exists
 
   loadModels = (modelsDirectory) ->
-    nodefn.call(fs.readdir, modelsDirectory)
-    .then (files) ->
-      files.filter (file) ->
-        /\.(js|coffee)$/.test file
+    callbacks.call(fs.exists, modelsDirectory)
+    .then (exists) =>
+      return unless exists
 
-    .then (files) ->
-      files.map (file) ->
-        path.join modelsDirectory, file
+      nodefn.call(fs.readdir, modelsDirectory)
+      .then (files) ->
+        files.filter (file) ->
+          path.extname(file) in Object.keys require.extensions
 
-    .then (files) =>
-      w.map files, (file) =>
-        modelName = path.basename file, path.extname file
-        modelKey = i.singularize(i.titleize(modelName)).replace /\ /g, ""
-        schemaKey = modelName + "Schema"
+      .then (files) ->
+        files.map (file) ->
+          path.join modelsDirectory, file
 
-        @container.set schemaKey, require file
+      .then (files) =>
+        w.map files, (file) =>
+          modelName = path.basename file, path.extname file
+          modelKey = i.singularize(i.titleize(modelName)).replace /\ /g, ""
+          schemaKey = modelName + "Schema"
 
-        @container.set modelKey, (container, connection) ->
-          container.get(schemaKey)
-          .then (schema) ->
-            model = connection.model modelName, schema
+          @container.set schemaKey, require file
 
-            # ALERT: patch model
-            originalCreate = model.create
-            model.create = ->
-              nodefn.apply originalCreate.bind(@), arguments
+          @container.set modelKey, (container, connection) ->
+            container.get(schemaKey)
+            .then (schema) ->
+              model = connection.model modelName, schema
 
-            model
+              # ALERT: patch model
+              originalCreate = model.create
+              model.create = ->
+                nodefn.apply originalCreate.bind(@), arguments
+
+              model
 
   loadRouter = (routerConfigFile, controllersDirectory) ->
-    @container.inject(require routerConfigFile)
-    .then =>
-      @container.get "router"
-    .then (router) ->
-      router.load controllersDirectory
+    callbacks.call(fs.exists, routerConfigFile)
+    .then (exists) =>
+      return unless exists
+
+      @container.inject(require routerConfigFile)
+      .then =>
+        @container.get "router"
+      .then (router) ->
+        router.load controllersDirectory
