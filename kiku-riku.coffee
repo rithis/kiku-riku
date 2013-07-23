@@ -13,8 +13,10 @@ container = kantaina()
 
 
 loadModule = (module) ->
-  applicationDirectory = path.dirname require.resolve module
+  loadApplication path.dirname require.resolve module
 
+
+loadApplication = (applicationDirectory) ->
   configDirectory = path.join applicationDirectory, "config"
   controllersDirectory = path.join applicationDirectory, "controllers"
   modelsDirectory = path.join applicationDirectory, "models"
@@ -140,8 +142,9 @@ loadRouter = (routerConfigFile, controllersDirectory) ->
     app.listen 3000
 
 
-loadModule("./index")
-.then null, (err) ->
-  process.stderr.write err.toString()
-  process.stderr.write "\n"
-  process.exit 1
+module.exports = (applicationDirectory) ->
+  loadApplication(applicationDirectory)
+  .then null, (err) ->
+    process.stderr.write err.toString()
+    process.stderr.write "\n"
+    process.exit 1
