@@ -1,6 +1,7 @@
 {
   "name": "kiku-riku",
   "version": "0.1.0",
+  "main": "lib/kiku-riku",
   "dependencies": {
     "kantaina": "~1.1",
     "mongoose": "3.6",

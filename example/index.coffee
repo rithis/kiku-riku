@@ -1,3 +1,3 @@
-kr = require "../kiku-riku"
+kr = require ".."
 
 kr(__dirname)
