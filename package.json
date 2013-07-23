@@ -1,0 +1,11 @@
+{
+  "name": "kiku-riku",
+  "version": "0.1.0",
+  "dependencies": {
+    "kantaina": "~1.1",
+    "mongoose": "3.6",
+    "express": "~3.3",
+    "when": "~2.2",
+    "i": "~0.3"
+  }
+}
