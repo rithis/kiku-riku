@@ -8,12 +8,13 @@ w = require "when"
 
 
 module.exports = class Core
-  constructor: (@container) ->
+  constructor: (@container, @logger) ->
 
   loadModule: (moduleId) ->
     @loadApplication path.dirname require.resolve moduleId
 
   loadApplication: (applicationDirectory) ->
+    @logger.debug "load application", path: applicationDirectory
     configDirectory = path.join applicationDirectory, "config"
     controllersDirectory = path.join applicationDirectory, "controllers"
     modelsDirectory = path.join applicationDirectory, "models"
@@ -30,13 +31,16 @@ module.exports = class Core
       @
 
   run: ->
-    @container.inject (app, port) ->
+    @container.inject (app, port, logger) ->
+      logger.info "listen", port: port
       app.listen port
 
   loadDi = (diConfigFile) ->
     callbacks.call(fs.exists, diConfigFile)
     .then (exists) =>
-      @container.inject require diConfigFile if exists
+      return unless exists
+      @logger.debug "configure di", path: diConfigFile
+      @container.inject require diConfigFile
 
   loadModels = (modelsDirectory) ->
     callbacks.call(fs.exists, modelsDirectory)
@@ -58,6 +62,8 @@ module.exports = class Core
           modelKey = i.singularize(i.titleize(modelName)).replace /\ /g, ""
           schemaKey = modelName + "Schema"
 
+          @logger.debug "load model", path: file, key: modelKey
+
           @container.set schemaKey, require file
 
           @container.set modelKey, (container, connection) ->
@@ -76,6 +82,8 @@ module.exports = class Core
     callbacks.call(fs.exists, routerConfigFile)
     .then (exists) =>
       return unless exists
+
+      @logger.debug "configure routing", path: routerConfigFile
 
       @container.inject(require routerConfigFile)
       .then =>

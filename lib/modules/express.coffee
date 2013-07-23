@@ -14,7 +14,7 @@ module.exports = (container) ->
     app.use express.bodyParser()
     app
 
-  container.set "router", (app, container) ->
+  container.set "router", (app, container, logger) ->
     controllers: {}
 
     add: (url, controller, action, method, model) ->
@@ -24,6 +24,7 @@ module.exports = (container) ->
     load: (controllersDirectory) ->
       for controllerName, actions of @controllers
         file = path.join controllersDirectory, controllerName
+        logger.debug "load controller", path: file
         controller = require file
 
         for action, url of actions
@@ -44,8 +45,9 @@ module.exports = (container) ->
             app[method] url, (req, res) ->
               res.send 405
 
-  container.set "resource", (router) ->
+  container.set "resource", (router, logger) ->
     (name) ->
+      logger.debug "define resource", name: name
       collectionUrl = "/" + name
       documentUrl = collectionUrl + "/:_id"
       collectionSuffix = i.camelize name

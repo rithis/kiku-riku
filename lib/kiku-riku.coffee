@@ -4,7 +4,8 @@ w = require "when"
 
 
 createCore = (container) ->
-  new Core container
+  container.inject (logger) ->
+    new Core container, logger
 
 
 runCore = (applicationDirectory, core) ->
@@ -34,6 +35,7 @@ module.exports.containerFactory = containerFactory = ->
   container = new kantaina.Container
 
   container.inject([
+    require "./modules/winston"
     require "./modules/mongoose"
     require "./modules/express"
   ]).then ->
