@@ -1,3 +1,4 @@
+sequence = require "when/sequence"
 kantaina = require "kantaina"
 mongoose = require "mongoose"
 express = require "express"
@@ -14,14 +15,25 @@ container = kantaina()
 loadModule = (module) ->
   applicationDirectory = path.dirname require.resolve module
 
-  loadModels(applicationDirectory)
-  .then ->
-    loadRouter applicationDirectory
-
-
-loadModels = (applicationDirectory) ->
+  configDirectory = path.join applicationDirectory, "config"
+  controllersDirectory = path.join applicationDirectory, "controllers"
   modelsDirectory = path.join applicationDirectory, "models"
 
+  routerConfigFile = path.join configDirectory, "router.coffee"
+  diConfigFile = path.join configDirectory, "di.coffee"
+
+  sequence [
+    -> loadDi diConfigFile
+    -> loadModels modelsDirectory
+    -> loadRouter routerConfigFile, controllersDirectory
+  ]
+
+
+loadDi = (diConfigFile) ->
+  container.inject(require diConfigFile)
+
+
+loadModels = (modelsDirectory) ->
   container.set "mongoose", mongoose
   container.set "connectionString", "mongodb://localhost/test"
   container.set "connection", (mongoose, connectionString) ->
@@ -62,10 +74,7 @@ loadModels = (applicationDirectory) ->
           model
 
 
-loadRouter = (applicationDirectory) ->
-  controllersDirectory = path.join applicationDirectory, "controllers"
-  configDirectory = path.join applicationDirectory, "config"
-
+loadRouter = (routerConfigFile, controllersDirectory) ->
   container.set "express", ->
     express
   
@@ -120,7 +129,7 @@ loadRouter = (applicationDirectory) ->
       router.add documentUrl, name, "put" + documentSuffix, "put", model
       router.add documentUrl, name, "delete" + documentSuffix, "delete", model
 
-  container.inject(require path.join(configDirectory, "router.coffee"))
+  container.inject(require routerConfigFile)
   .then ->
     container.get "router"
   .then (router) ->
