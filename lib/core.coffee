@@ -21,11 +21,13 @@ module.exports = class Core
     routerConfigFile = path.join configDirectory, "router.coffee"
     diConfigFile = path.join configDirectory, "di.coffee"
 
-    sequence [
+    sequence([
       loadDi.bind @, diConfigFile
       loadModels.bind @, modelsDirectory
       loadRouter.bind @, routerConfigFile, controllersDirectory
-    ]
+    ])
+    .then =>
+      @
 
   run: ->
     @container.inject (app) ->
