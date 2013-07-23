@@ -14,6 +14,11 @@ module.exports = (container) ->
     app.use express.bodyParser()
     app
 
+  container.set "listener", (app, port, logger) ->
+    listen: ->
+      logger.info "listen", port: port
+      app.listen port
+
   container.set "router", (app, container, logger) ->
     controllers: {}
 

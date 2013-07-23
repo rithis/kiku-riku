@@ -1,3 +1,4 @@
 kr = require ".."
 
-kr(__dirname)
+module.exports = class Example extends kr.Module
+  @directory = __dirname
