@@ -8,14 +8,20 @@ fs = require "fs"
 w = require "when"
 
 
-applicationDirectory = __dirname
-controllersDirectory = path.join applicationDirectory, "controllers"
-configDirectory = path.join applicationDirectory, "config"
-modelsDirectory = path.join applicationDirectory, "models"
 container = kantaina()
 
 
-loadModels = ->
+loadModule = (module) ->
+  applicationDirectory = path.dirname require.resolve module
+
+  loadModels(applicationDirectory)
+  .then ->
+    loadRouter applicationDirectory
+
+
+loadModels = (applicationDirectory) ->
+  modelsDirectory = path.join applicationDirectory, "models"
+
   container.set "mongoose", mongoose
   container.set "connectionString", "mongodb://localhost/test"
   container.set "connection", (mongoose, connectionString) ->
@@ -56,7 +62,10 @@ loadModels = ->
           model
 
 
-loadRouter = ->
+loadRouter = (applicationDirectory) ->
+  controllersDirectory = path.join applicationDirectory, "controllers"
+  configDirectory = path.join applicationDirectory, "config"
+
   container.set "express", ->
     express
   
@@ -122,9 +131,7 @@ loadRouter = ->
     app.listen 3000
 
 
-loadModels()
-.then ->
-  loadRouter()
+loadModule("./index")
 .then null, (err) ->
   process.stderr.write err.toString()
   process.stderr.write "\n"
