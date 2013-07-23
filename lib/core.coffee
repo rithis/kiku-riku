@@ -30,8 +30,8 @@ module.exports = class Core
       @
 
   run: ->
-    @container.inject (app) ->
-      app.listen 3000
+    @container.inject (app, port) ->
+      app.listen port
 
   loadDi = (diConfigFile) ->
     callbacks.call(fs.exists, diConfigFile)

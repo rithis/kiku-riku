@@ -7,6 +7,8 @@ module.exports = (container) ->
   container.set "express", ->
     express
 
+  container.set "port", 3000
+
   container.set "app", (express) ->
     app = express()
     app.use express.bodyParser()
